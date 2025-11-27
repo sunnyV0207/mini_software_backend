@@ -4,6 +4,36 @@ import ApiError from '../utilities/ApiError.js';
 import User from '../models/user.model.js';
 import School from '../models/school.model.js';
 
+export const fetchPrincipals = asyncHandler(async (req, res, next) => {
+    const principals = await User.find({role: 'Principal'}).populate('school','schoolName schoolCode');
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            'Principals fetched successfully',
+            principals
+        )
+    )
+});
+
+export const getPrincipalById = asyncHandler(async (req, res, next) => {
+    const {principalId} = req.params;
+    const principal = await User.findById(principalId).populate('school','schoolName schoolCode');
+    if (!principal) {
+        return next(new ApiError(404,'Principal not found'));
+    }
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            'Principal fetched successfully',
+            {principal}
+        )
+    )
+});
+
 export const addPrincipal = asyncHandler(async (req, res, next) => {
     const {name, email, phone, schoolId, password} = req.body;
     if (!name || !email || !phone || !schoolId || !password) {
@@ -145,6 +175,30 @@ export const assignNewPrincipal = asyncHandler(async (req, res, next) => {
             200,
             'Principal reassigned successfully',
             {name, email, phone}
+        )
+    )
+});
+
+export const updatePrincipal = asyncHandler(async (req, res, next) => {
+    const {principalId} = req.params;
+    const {name, email, phone, gender} = req.body;
+
+    const principal = await User.findById(principalId); 
+    if (!principal) {
+        return next(new ApiError(404,'Principal not found'));
+    }
+    principal.name = name || principal.name;
+    principal.email = email || principal.email;
+    principal.phone = phone || principal.phone;
+    principal.gender = gender || principal.gender;
+    await principal.save();
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            'Principal updated successfully',
+            {name  , email, phone, gender}
         )
     )
 });

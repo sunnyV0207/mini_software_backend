@@ -95,3 +95,27 @@ export const editSchool = asyncHandler(async (req, res, next) => {
         )
     )
 });
+
+export const editSchoolStatus = asyncHandler(async (req, res, next) => {
+    const {schoolId} = req.params;
+    console.log("School ID to update status:", schoolId);
+    const school = await School.findById(schoolId);
+
+    if (!school) {
+        return next(new ApiError(404, 'School not found'));
+    }
+
+    school.status == 'Active' ? school.status = 'Inactive' : school.status = 'Active';
+
+    await school.save();
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            'School status updated successfully',
+            {school}
+        )
+    )
+});

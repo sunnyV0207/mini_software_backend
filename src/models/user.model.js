@@ -23,6 +23,11 @@ const userSchema = new mongoose.Schema(
       select: false, // IMPORTANT: prevents sending password
     },
 
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+    },
+
     role: {
       type: String,
       enum: ["Super Admin", "Principal", "Teacher", "Student", "Parent"],
