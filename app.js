@@ -19,6 +19,12 @@ app.use('/api/user', userRoutes);
 import authRoutes from './src/routes/auth.route.js';
 app.use('/api/auth', authRoutes);
 
+import schoolRoutes from './src/routes/school.route.js';
+app.use('/api/school', schoolRoutes);
+
+import principalRoutes from './src/routes/principal.route.js';
+app.use('/api/principal', principalRoutes);
+
 
 app.use((err, req, res, next) => {
   console.error("Error middleware caught:", err.message);

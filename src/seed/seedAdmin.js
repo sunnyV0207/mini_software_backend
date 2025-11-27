@@ -18,13 +18,11 @@ async function seedAdmin() {
     const hashedPassword = "SuperAdmin@123"
 
     const admin = new User({
-      firstName: "Sunny",
-      lastName: "Verma",
+      name: "Sunny Verma",
       phone: "9027259417",
       email: "sunnyvermaverma2005@gmail.com",
       password: hashedPassword,
       role: "Super Admin",
-      isVerified: true,
     });
 
     await admin.save();
