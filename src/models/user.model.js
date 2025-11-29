@@ -34,6 +34,12 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    status: {
+      type: String,
+      enum: ["Active", "Inactive"],
+      default: "Active",
+    },
+
     // 🔥 Principal will belong to a school
     school: {
       type: mongoose.Schema.Types.ObjectId,

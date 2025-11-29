@@ -202,3 +202,25 @@ export const updatePrincipal = asyncHandler(async (req, res, next) => {
         )
     )
 });
+
+export const deletePrincipal = asyncHandler(async (req, res, next) => {
+    const {principalId} = req.params;
+    const principal = await User.findById(principalId);
+    if (!principal) {
+        return next(new ApiError(404,'Principal not found'));
+    }
+    const school = await School.findById(principal.school);
+    if (school) {
+        school.principal = null;
+        await school.save();
+    }
+    await User.findByIdAndDelete(principalId);
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            'Principal deleted successfully'
+        )
+    )
+});
