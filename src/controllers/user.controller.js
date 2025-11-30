@@ -36,7 +36,7 @@ export const contact = asyncHandler(async (req, res, next) => {
 export const loginUser = asyncHandler(async (req, res, next) => {
     const {email,password} = req.body;
     // console.log(email, password);
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select('+password').populate('school', 'schoolName schoolCode address contactNumber');
     // console.log(user)
     if (!user) {
         return next(new ApiError(401,'User with this email do not exists'));

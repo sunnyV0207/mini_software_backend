@@ -17,6 +17,7 @@ const schoolSchema = new mongoose.Schema(
     teachers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     parents: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
 
     status: {
       type: String,

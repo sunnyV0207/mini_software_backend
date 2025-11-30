@@ -52,10 +52,6 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
 
-    address: {
-      type: String,
-    },
-
     // For students
     parent: {
       type: mongoose.Schema.Types.ObjectId,
