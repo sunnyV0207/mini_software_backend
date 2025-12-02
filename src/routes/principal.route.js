@@ -6,7 +6,7 @@ import {assignNewPrincipal} from '../controllers/principal.controller.js';
 import {fetchPrincipals} from '../controllers/principal.controller.js';
 import {getPrincipalById} from '../controllers/principal.controller.js';
 import {updatePrincipal} from '../controllers/principal.controller.js';
-import {deletePrincipal} from '../controllers/principal.controller.js';
+import {updatePrincipalStatus} from '../controllers/principal.controller.js';
 
 const router = Router();
 
@@ -17,6 +17,6 @@ router.route('/:schoolCode/reset-password').put(resetPrincipalPassword);
 router.route('/:schoolCode/re-assign-principal').post(assignNewPrincipal);
 router.route('/:principalId').get(getPrincipalById); // Added to fetch particular principal
 router.route('/update-principal/:principalId').put(updatePrincipal); // Added to update particular principal
-router.route('/:principalId/delete').delete(deletePrincipal); // Added to delete particular principal
+router.route('/:principalId/update-status').delete(updatePrincipalStatus); // Added to delete particular principal
 
 export default router;

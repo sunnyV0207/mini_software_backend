@@ -25,21 +25,22 @@ export const fetchSchools = asyncHandler(async (req, res, next) => {
 });
 
 export const addSchool = asyncHandler(async (req, res, next) => {
-    const {schoolName, schoolCode, address, contactNumber} = req.body;
-    if (!schoolName || !schoolCode || !address || !contactNumber) {
+    const {schoolName, schoolCode, address, contactNumber, email} = req.body;
+    if (!schoolName || !schoolCode || !address || !contactNumber || !email) {
         return next(new ApiError(400,'All fields are required'));
     }
 
-    const existingSchool = await School.findOne({schoolCode});
+    const existingSchool = await School.findOne({$or: [{email},{schoolCode}]});
     if (existingSchool) {
-        return next(new ApiError(400,'School with this code already exists'));
+        return next(new ApiError(400,'School with this email or code already exists'));
     }
 
     const newSchool = new School({
         schoolName,
         schoolCode,
         address,
-        contactNumber
+        contactNumber,
+        email
     });
 
     await newSchool.save();
@@ -50,7 +51,7 @@ export const addSchool = asyncHandler(async (req, res, next) => {
         new ApiResponse(
             200,
             'School added successfully',
-            {schoolName, address, contactNumber}
+            {schoolName, address, contactNumber,email}
         )
     )
 });
@@ -212,9 +213,11 @@ export const addTeacher = asyncHandler(async(req,res,next)=>{
         return next(new ApiError(401,"School is not defined"))
     }
 
-    const {assignedClass, assignedSection, fullName, email, password, phone} = req.body;
+    const {assignedClass, assignedSection, fullName, email, password, confirmPassword, phone, gender} = req.body;
 
-    if(!assignedClass || !assignedSection || !fullName || !email || !password || !phone ){
+    console.log(req.body)
+    
+    if(!assignedClass || !assignedSection || !fullName || !email || !password || !confirmPassword || !phone || !gender ){
         return next(new ApiError(401,"All fields are required"))
     }
 
@@ -228,6 +231,10 @@ export const addTeacher = asyncHandler(async(req,res,next)=>{
         return next(new ApiError(402,"This class do not exists for this school"))
     }
 
+    if(existingClass.classTeacher){
+        return next(new ApiError(400,"This class has already been assigned a teacher"))
+    }
+
     const existingUser = await User.findOne({email})
     if(existingUser){
         return next(new ApiError(402,"User with email already exists. Try another email address"))
@@ -238,13 +245,16 @@ export const addTeacher = asyncHandler(async(req,res,next)=>{
         email,
         phone,
         password,
-        gender: "Male",
+        gender,
         role: "Teacher",
         school: school._id,
+        class: existingClass
     })
 
     school.teachers.push(newUser._id)
     await school.save()
+    existingClass.classTeacher = newUser._id
+    await existingClass.save()
 
     res
     .status(200)
@@ -256,3 +266,58 @@ export const addTeacher = asyncHandler(async(req,res,next)=>{
         )
     )
 })
+
+export const getTeachers = asyncHandler( async (req,res,next) => {
+    const {schoolCode} = req.params;
+    // console.log(schoolCode)
+
+    if(!schoolCode){
+        return next(new ApiError(401,"School code is required"))
+    }
+
+    const school = await School.findOne({schoolCode}).populate(({path:"teachers",populate:{path:"class"}}))
+    if(!school){
+        return next(new ApiError(401,"School not found"))
+    }
+
+    const teachers = school.teachers;
+    // console.log(teachers)
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            "Techares fetched successfully",
+            teachers
+        )
+    )
+} )
+
+export const fetchClasses = asyncHandler( async(req,res,next)=>{
+    const {schoolCode} = req.params;
+    if(!schoolCode){
+        return next(new ApiError(401,"School code is required"))
+    }
+
+    const school = await School.findOne({schoolCode}).populate({path:'classes',populate:{path:'classTeacher',model:'User'}})
+        
+    if(!school){
+        return next(new ApiError(400,"No school found"))
+    }
+
+    // console.log(JSON.stringify(school,null,2))
+    // console.log(school.classes)
+
+    const classes = school.classes
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            "classes fetched successfully",
+            classes
+        )
+    )
+} )

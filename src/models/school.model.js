@@ -6,6 +6,11 @@ const schoolSchema = new mongoose.Schema(
     schoolCode: { type: String, required: true, unique: true },
     address: { type: String, required: true },
     contactNumber: { type: String, required: true },
+    email: {
+      type: String,
+      unique: true,
+      required: true
+    },
 
     // principal is NOT required initially
     principal: {

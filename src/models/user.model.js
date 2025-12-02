@@ -16,6 +16,11 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
     },
 
+    // Optional fields depending on future features
+    phone: {
+      type: String,
+    },
+
     password: {
       type: String,
       required: true,
@@ -47,9 +52,11 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Optional fields depending on future features
-    phone: {
-      type: String,
+    class: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Class",
+      default: null
+      // required: true
     },
 
     // For students

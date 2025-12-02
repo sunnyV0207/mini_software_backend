@@ -7,6 +7,9 @@ import {editSchoolStatus} from '../controllers/school.controller.js';
 import {getSchool} from '../controllers/school.controller.js';
 import {addClass} from '../controllers/school.controller.js';
 import {addTeacher} from '../controllers/school.controller.js';
+import {getTeachers} from '../controllers/school.controller.js';
+import {fetchClasses} from '../controllers/school.controller.js';
+
 
 const router = Router();
 
@@ -19,5 +22,8 @@ router.route('/update-school-status/:schoolId').patch(editSchoolStatus) // Reusi
 router.route('/:schoolId/get-school').get(getSchool)
 router.route("/:schoolCode/add-class").post(addClass)
 router.route("/:schoolCode/add-teacher").post(addTeacher)
+router.route("/:schoolCode/teachers/get-teachers").get(getTeachers)
+router.route("/:schoolCode/classes/fetch-all").get(fetchClasses)
+
 
 export default router;

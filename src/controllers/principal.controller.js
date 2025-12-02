@@ -35,8 +35,8 @@ export const getPrincipalById = asyncHandler(async (req, res, next) => {
 });
 
 export const addPrincipal = asyncHandler(async (req, res, next) => {
-    const {name, email, phone, schoolId, password} = req.body;
-    if (!name || !email || !phone || !schoolId || !password) {
+    const {name, email, phone, schoolId, password, confirmPassword, gender} = req.body;
+    if (!name || !email || !phone || !schoolId || !password || !confirmPassword || !gender) {
         return next(new ApiError(400,'All fields are required'));
     }
 
@@ -53,6 +53,10 @@ export const addPrincipal = asyncHandler(async (req, res, next) => {
     if (existingUser) {
         return next(new ApiError(400,'User with this email already exists'));
     }
+    
+    if(password !== confirmPassword){
+        return next(new ApiError(400,"Password must be equal to cinfirm password"))
+    }
 
     const newPrincipal = new User({
         name,
@@ -60,7 +64,8 @@ export const addPrincipal = asyncHandler(async (req, res, next) => {
         phone,
         school: schoolId,
         password,
-        role: 'Principal'
+        role: 'Principal',
+        gender
     });
     await newPrincipal.save();
 
@@ -203,24 +208,29 @@ export const updatePrincipal = asyncHandler(async (req, res, next) => {
     )
 });
 
-export const deletePrincipal = asyncHandler(async (req, res, next) => {
+export const updatePrincipalStatus = asyncHandler(async (req, res, next) => {
     const {principalId} = req.params;
+
+    if(!principalId){
+        return next(new ApiError(401,"Principal id is required"))
+    }
+
+
     const principal = await User.findById(principalId);
     if (!principal) {
         return next(new ApiError(404,'Principal not found'));
     }
-    const school = await School.findById(principal.school);
-    if (school) {
-        school.principal = null;
-        await school.save();
-    }
-    await User.findByIdAndDelete(principalId);
+    
+    principal.status = principal.status === "Active" ? "Inactive" : "Active"
+    await principal.save()
+
     res
     .status(200)
     .json(
         new ApiResponse(
             200,
-            'Principal deleted successfully'
+            'Principal status updated successfully',
+            principal
         )
     )
 });

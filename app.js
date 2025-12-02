@@ -25,6 +25,9 @@ app.use('/api/school', schoolRoutes);
 import principalRoutes from './src/routes/principal.route.js';
 app.use('/api/principal', principalRoutes);
 
+import teacherRoutes from './src/routes/teacher.route.js'
+app.use('/api/teacher',teacherRoutes)
+
 
 app.use((err, req, res, next) => {
   console.error("Error middleware caught:", err.message);
