@@ -29,7 +29,7 @@ async function seedAdmin() {
 
     console.log("Super Admin created successfully!");
     process.exit();
-    
+
   } catch (err) {
     console.error(err);
     process.exit();

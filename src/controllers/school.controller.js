@@ -294,22 +294,40 @@ export const getTeachers = asyncHandler( async (req,res,next) => {
     )
 } )
 
-export const fetchClasses = asyncHandler( async(req,res,next)=>{
-    const {schoolCode} = req.params;
-    if(!schoolCode){
-        return next(new ApiError(401,"School code is required"))
+export const fetchClasses = asyncHandler( async(req, res, next) => {
+    const { schoolCode } = req.params;
+    if (!schoolCode) {
+        return next(new ApiError(401, "School code is required"));
     }
 
-    const school = await School.findOne({schoolCode}).populate({path:'classes',populate:{path:'classTeacher',model:'User'}})
+    const school = await School.findOne({ schoolCode }).populate({
+        path: 'classes',
+        populate: [
+            { path: 'classTeacher', model: 'User', select: 'name email phone status' },
+            { path: 'students', model: 'User', select: 'name email phone gender rollNumber status' }
+        ]
+    });
         
-    if(!school){
-        return next(new ApiError(400,"No school found"))
+    if (!school) {
+        return next(new ApiError(404, "School not found"));
     }
 
-    // console.log(JSON.stringify(school,null,2))
-    // console.log(school.classes)
+    const classesWithStats = (school.classes || []).map((cls) => {
+        const clsObj = cls.toObject ? cls.toObject() : cls;
+        const studentList = clsObj.students || [];
+        const boys = studentList.filter((s) => s && s.gender === 'Male').length;
+        const girls = studentList.filter((s) => s && s.gender === 'Female').length;
+        const others = studentList.filter((s) => s && (s.gender === 'Other' || s.gender === 'Others')).length;
 
-    const classes = school.classes
+        return {
+            ...clsObj,
+            boys,
+            girls,
+            others,
+            totalStudents: studentList.length,
+            attendance: clsObj.attendance || 85,
+        };
+    });
 
     res
     .status(200)
@@ -317,7 +335,142 @@ export const fetchClasses = asyncHandler( async(req,res,next)=>{
         new ApiResponse(
             200,
             "classes fetched successfully",
-            classes
+            classesWithStats
         )
-    )
-} )
+    );
+});
+
+export const getStudents = asyncHandler( async (req, res, next) => {
+    const { schoolCode } = req.params;
+
+    if (!schoolCode) {
+        return next(new ApiError(401, "School code is required"));
+    }
+
+    const school = await School.findOne({ schoolCode }).populate({
+        path: "students",
+        populate: { path: "class" }
+    });
+
+    if (!school) {
+        return next(new ApiError(404, "School not found"));
+    }
+
+    const students = school.students || [];
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            "Students fetched successfully",
+            students
+        )
+    );
+});
+
+export const getParents = asyncHandler( async (req, res, next) => {
+    const { schoolCode } = req.params;
+
+    if (!schoolCode) {
+        return next(new ApiError(401, "School code is required"));
+    }
+
+    const school = await School.findOne({ schoolCode }).populate({
+        path: "parents",
+        populate: {
+            path: "children",
+            populate: { path: "class" }
+        }
+    });
+
+    if (!school) {
+        return next(new ApiError(404, "School not found"));
+    }
+
+    const parents = school.parents || [];
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            "Parents fetched successfully",
+            parents
+        )
+    );
+});
+
+export const getClassById = asyncHandler(async (req, res, next) => {
+    const { classId } = req.params;
+
+    if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
+        return next(new ApiError(400, "Valid Class ID is required"));
+    }
+
+    const targetClass = await Class.findById(classId)
+        .populate("classTeacher", "name email phone")
+        .populate("students", "name email rollNumber gender")
+        .populate("school", "schoolName schoolCode");
+
+    if (!targetClass) {
+        return next(new ApiError(404, "Class not found"));
+    }
+
+    res.status(200).json(new ApiResponse(200, "Class fetched successfully", targetClass));
+});
+
+export const editClass = asyncHandler(async (req, res, next) => {
+    const { classId } = req.params;
+
+    if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
+        return next(new ApiError(400, "Valid Class ID is required"));
+    }
+
+    const targetClass = await Class.findById(classId);
+    if (!targetClass) {
+        return next(new ApiError(404, "Class not found to edit"));
+    }
+
+    const { classNumber, section, subjects, classTeacher } = req.body;
+
+    if (classNumber && section && (Number(classNumber) !== targetClass.classNumber || section.trim() !== targetClass.section)) {
+        const existingClass = await Class.findOne({
+            classNumber: Number(classNumber),
+            section: section.trim(),
+            school: targetClass.school,
+            _id: { $ne: classId }
+        });
+        if (existingClass) {
+            return next(new ApiError(400, "Another class with this class number and section already exists in this school."));
+        }
+        targetClass.classNumber = Number(classNumber);
+        targetClass.section = section.trim();
+    }
+
+    if (Array.isArray(subjects)) {
+        targetClass.subjects = subjects;
+    }
+
+    if (classTeacher !== undefined) {
+        if (targetClass.classTeacher && String(targetClass.classTeacher) !== String(classTeacher)) {
+            await User.findByIdAndUpdate(targetClass.classTeacher, { $set: { class: null } });
+        }
+
+        if (classTeacher && mongoose.Types.ObjectId.isValid(classTeacher)) {
+            targetClass.classTeacher = classTeacher;
+            await User.findByIdAndUpdate(classTeacher, { $set: { class: targetClass._id } });
+        } else if (!classTeacher) {
+            targetClass.classTeacher = null;
+        }
+    }
+
+    await targetClass.save();
+
+    const updatedClass = await Class.findById(classId)
+        .populate("classTeacher", "name email phone")
+        .populate("students", "name email rollNumber gender")
+        .populate("school", "schoolName schoolCode");
+
+    res.status(200).json(new ApiResponse(200, "Class updated successfully", updatedClass));
+});
