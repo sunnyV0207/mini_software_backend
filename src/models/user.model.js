@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
 
     gender: {
       type: String,
-      enum: ["Male", "Female", "Other"],
+      enum: ["Male", "Female", "Other", "Others"],
     },
 
     role: {
@@ -45,7 +45,23 @@ const userSchema = new mongoose.Schema(
       default: "Active",
     },
 
-    // 🔥 Principal will belong to a school
+    // Student specific fields
+    rollNumber: {
+      type: String,
+      default: null,
+    },
+
+    parentName: {
+      type: String,
+      default: null,
+    },
+
+    parentPhone: {
+      type: String,
+      default: null,
+    },
+
+    // 🔥 Principal / Teacher / Student will belong to a school
     school: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
@@ -59,10 +75,28 @@ const userSchema = new mongoose.Schema(
       // required: true
     },
 
-    // For students
+    // For students (reference to parent)
     parent: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      default: null,
+    },
+
+    // For parents (multiple children students)
+    children: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    occupation: {
+      type: String,
+      default: null,
+    },
+
+    address: {
+      type: String,
       default: null,
     },
 
